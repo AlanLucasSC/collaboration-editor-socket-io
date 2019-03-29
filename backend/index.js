@@ -2,21 +2,18 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
-const PORT = 12345
+const setUserOnRoom = require('./service/firebaseService').setUserOnRoom
 
-var rooms = []
+const PORT = 12345
 
 io.on('connection', function(client){
     client.on('update document', function(document){
         client.broadcast.emit('update document', document);
     });
     client.on('user connect', function(newConnection){
-        if(!rooms[newConnection.docId]){
-            rooms[newConnection.docId] = []
-        }
-        room = rooms[newConnection.docId]
-        room[client.id] = newConnection.user
-        io.emit('users', room);
+        setUserOnRoom(newConnection.user, newConnection.docId, client.id)
+
+        io.emit('users', newConnection);
     });
     client.on('disconnect', function () {
         console.log('client disconnected');
