@@ -11,13 +11,26 @@ io.on('connection', function(client){
         client.broadcast.emit('update document', document);
     });
     client.on('user connect', function(newConnection){
-        setUserOnRoom(newConnection.user, newConnection.docId, client.id)
+        //setUserOnRoom(newConnection.user, newConnection.docId, client.id)
 
-        io.emit('users', newConnection);
+        var name = newConnection.user
+        var room = newConnection.docId
+        var clientId = client.id
+
+        client.join(room);
+
+        io.to(room).emit('new user', {name, room, clientId});
+
+        client.on('disconnect', function () {
+            io.to(room).emit('user disconnected', {name, room, clientId});
+        });
     });
-    client.on('disconnect', function () {
-        console.log('client disconnected');
-    });
+    client.on('others users on room', function(received){
+        var users = received.users
+        var toUser = received.toUser
+
+        io.to(toUser).emit('users on room', users)
+    })
 });
 
 http.listen(PORT, function(){
